@@ -1,0 +1,15 @@
+{
+  "name": "library",
+  "version": "1.0.0",
+  "description": "GraphQL backend for basic library. Part 8 of FullStackOpenCourse: https://fullstackopen.com/en/part8/graph_ql_server#exercises-8-1-8-7",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Anirudh Kannan",
+  "license": "MIT",
+  "dependencies": {
+    "apollo-server": "^3.0.2",
+    "graphql": "^15.5.1"
+  }
+}
