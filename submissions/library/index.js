@@ -83,8 +83,29 @@ let books = [
     },
 ]
 
-const typeDefs = gql`
+const findNumBooks = (author) => {
+  const name = author.name.toLowerCase()
+  let numBooks = 0
+  books.forEach(book => {
+      if (book.author.toLowerCase() === name) {
+          numBooks += 1
+      }
+  })
+  return numBooks
+}
 
+const findBookCountAndReturnEditedObject = (author) => {
+  const name = author.name.toLowerCase()
+  let numBooks = 0
+  books.forEach(book => {
+      if (book.author.toLowerCase() === name) {
+          numBooks += 1
+      }
+  })
+  return {...author, bookCount: numBooks}
+}
+
+const typeDefs = gql`
     type Book {
         title: String!
         published: Int!
@@ -93,10 +114,19 @@ const typeDefs = gql`
         genres: [String!]!
     }
 
+    type Author {
+        name: String!
+        id: String!
+        born: Int
+        bookCount: Int
+    }
+
     type Query {
         bookCount: Int!
         authorCount: Int!
         allBooks: [Book!]!
+        findAuthor(name: String!): Author
+        allAuthors: [Author!]!
     }
 `
 
@@ -104,7 +134,25 @@ const resolvers = {
     Query: {
         bookCount: () => books.length,
         authorCount: () => authors.length,
-        allBooks: () => books
+        allBooks: () => books,
+        findAuthor: (root, args) => {
+          let foundAuthor = authors.find(a => a.name.toLowerCase() === args.name.toLowerCase())
+
+          if (foundAuthor !== null) {
+            foundAuthor = {...foundAuthor, bookCount: findNumBooks(foundAuthor)}
+          }
+
+          return foundAuthor
+        },
+        allAuthors: () => {
+          let bookCountAuthors2 = []
+
+          authors.map(a => {
+            bookCountAuthors2 = bookCountAuthors2.concat(findBookCountAndReturnEditedObject(a))
+          })
+
+          return bookCountAuthors2
+        }
     }
 }
 
