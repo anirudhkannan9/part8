@@ -1,4 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server')
+const { v1: uuid } = require('uuid')
 
 let authors = [
     {
@@ -196,7 +197,28 @@ const resolvers = {
     },
     Mutation: {
       addBook: (root, args) => {
-        //author does/doesn't exist in db yet
+        const newBookObject = {
+          title: args.title,
+          published: args.published,
+          author: args.author.toLowerCase().trim(),
+          id: uuid(),
+          genres: args.genres
+        }
+
+        books = books.concat(newBookObject)
+
+        let authorsFilter = authors.map(a => a.name.toLowerCase().trim())
+        if (!authorsFilter.includes(args.author.toLowerCase().trim())) {
+          console.log('author does not exist in db, create new author object and add to list/db')
+          const newAuthorObject = {
+            name: args.author.toLowerCase().trim(),
+            id: uuid(),
+            born: null
+          }
+          authors = authors.concat(newAuthorObject)
+        } 
+
+        return newBookObject
       }
     } 
 
