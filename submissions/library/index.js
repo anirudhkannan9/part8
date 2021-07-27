@@ -124,7 +124,7 @@ const typeDefs = gql`
     type Query {
         bookCount: Int!
         authorCount: Int!
-        allBooks(author: String): [Book!]!
+        allBooks(author: String genre: String): [Book!]!
         findAuthor(name: String!): Author
         allAuthors: [Author!]!
     }
@@ -135,19 +135,47 @@ const resolvers = {
         bookCount: () => books.length,
         authorCount: () => authors.length,
         allBooks: (root, args) => {
-          if (!args.author) {
+          if (!args.author && !args.genre) {
             return books
+          } else if (args.author && !args.genre) {
+            let booksByAuthor = []
+
+            books.forEach(book => {
+              if (book.author.toLowerCase().trim() === args.author.toLowerCase().trim()) {
+                booksByAuthor = booksByAuthor.concat(book)
+              }
+            })
+
+            return booksByAuthor
+          } else if (!args.author && args.genre) {            
+            let booksInGenre = []
+
+            books.forEach(book => {
+              if (book.genres.map(g => g.toLowerCase().trim()).includes(args.genre.toLowerCase().trim())) {
+                booksInGenre = booksInGenre.concat(book)
+              }
+            })
+
+            return booksInGenre
+          } else {
+            console.log('both: ', args.author, args.genre)
+            let booksByAuthor = []
+
+            books.forEach(book => {
+              if (book.author.toLowerCase().trim() === args.author.toLowerCase().trim()) {
+                booksByAuthor = booksByAuthor.concat(book)
+              }
+            })
+
+            let booksInGenre = []
+            booksByAuthor.forEach(book => {
+              if (book.genres.map(g => g.toLowerCase().trim()).includes(args.genre.toLowerCase().trim())) {
+                booksInGenre = booksInGenre.concat(book)
+              }
+            })
+
+            return booksInGenre
           }
-
-          let booksByAuthor = []
-          books.forEach(book => {
-            if (book.author.toLowerCase() === args.author.toLowerCase()) {
-              booksByAuthor = booksByAuthor.concat(book)
-            }
-          })
-
-          return booksByAuthor
-          
         },
         findAuthor: (root, args) => {
           let foundAuthor = authors.find(a => a.name.toLowerCase() === args.name.toLowerCase())
