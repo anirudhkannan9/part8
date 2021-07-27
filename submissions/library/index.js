@@ -128,6 +128,15 @@ const typeDefs = gql`
         findAuthor(name: String!): Author
         allAuthors: [Author!]!
     }
+
+    type Mutation {
+      addBook(
+        title: String!
+        author: String!
+        published: Int!
+        genres: [String!]!
+      ): Book!
+    }
 `
 
 const resolvers = {
@@ -177,25 +186,20 @@ const resolvers = {
             return booksInGenre
           }
         },
-        findAuthor: (root, args) => {
-          let foundAuthor = authors.find(a => a.name.toLowerCase() === args.name.toLowerCase())
+        findAuthor: (root, args) => authors.find(a => a.name.toLowerCase().trim() === args.name.toLowerCase().trim()),
+        allAuthors: () => authors
+    },
+    Author: {
+      bookCount: (root) => {
+        return findNumBooks(root)
+      }
+    },
+    Mutation: {
+      addBook: (root, args) => {
+        //author does/doesn't exist in db yet
+      }
+    } 
 
-          if (foundAuthor !== null) {
-            foundAuthor = {...foundAuthor, bookCount: findNumBooks(foundAuthor)}
-          }
-
-          return foundAuthor
-        },
-        allAuthors: () => {
-          let bookCountAuthors2 = []
-
-          authors.map(a => {
-            bookCountAuthors2 = bookCountAuthors2.concat(findBookCountAndReturnEditedObject(a))
-          })
-
-          return bookCountAuthors2
-        }
-    }
 }
 
 const server = new ApolloServer({
