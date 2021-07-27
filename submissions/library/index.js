@@ -124,7 +124,7 @@ const typeDefs = gql`
     type Query {
         bookCount: Int!
         authorCount: Int!
-        allBooks: [Book!]!
+        allBooks(author: String): [Book!]!
         findAuthor(name: String!): Author
         allAuthors: [Author!]!
     }
@@ -134,7 +134,21 @@ const resolvers = {
     Query: {
         bookCount: () => books.length,
         authorCount: () => authors.length,
-        allBooks: () => books,
+        allBooks: (root, args) => {
+          if (!args.author) {
+            return books
+          }
+
+          let booksByAuthor = []
+          books.forEach(book => {
+            if (book.author.toLowerCase() === args.author.toLowerCase()) {
+              booksByAuthor = booksByAuthor.concat(book)
+            }
+          })
+
+          return booksByAuthor
+          
+        },
         findAuthor: (root, args) => {
           let foundAuthor = authors.find(a => a.name.toLowerCase() === args.name.toLowerCase())
 
