@@ -234,10 +234,7 @@ const resolvers = {
         const authorsFilter = authors.map(a => a.name).map(n => processString(n))
         
         if (authorsFilter.includes(processedName)) {
-          console.log('author exists in server')
-          console.log('authors before editing author: ', authors)
           authors = authors.map(a => processString(a.name) === processedName ? {...a, born: args.setBornTo} : a)
-          console.log('authors after editing author: ', authors)
           return authors.find(a => processString(a.name) === processedName)
 
         } else {
