@@ -106,6 +106,10 @@ const findBookCountAndReturnEditedObject = (author) => {
   return {...author, bookCount: numBooks}
 }
 
+const processString = (str) => {
+  return str.toLowerCase().trim()
+}
+
 const typeDefs = gql`
     type Book {
         title: String!
@@ -137,6 +141,10 @@ const typeDefs = gql`
         published: Int!
         genres: [String!]!
       ): Book!
+      editAuthor(
+        name: String!
+        setBornTo: Int! 
+      ): Author
     }
 `
 
@@ -168,7 +176,6 @@ const resolvers = {
 
             return booksInGenre
           } else {
-            console.log('both: ', args.author, args.genre)
             let booksByAuthor = []
 
             books.forEach(book => {
@@ -219,6 +226,27 @@ const resolvers = {
         } 
 
         return newBookObject
+      },
+      editAuthor: (root, args) => {
+        //tried normalizing names - didn't seem worth it, especially because the string.normalize() method had no apparent effect (verified by equality checks)
+
+        const processedName = processString(args.name)
+        const authorsFilter = authors.map(a => a.name).map(n => processString(n))
+        
+        if (authorsFilter.includes(processedName)) {
+          console.log('author exists in server')
+          console.log('authors before editing author: ', authors)
+          authors = authors.map(a => processString(a.name) === processedName ? {...a, born: args.setBornTo} : a)
+          console.log('authors after editing author: ', authors)
+          return authors.find(a => processString(a.name) === processedName)
+
+        } else {
+          console.log('author does not exist in server')
+          return null
+        }
+        
+
+
       }
     } 
 
