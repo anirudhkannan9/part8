@@ -11,8 +11,6 @@ const App = () => {
   const authors = useQuery(ALL_AUTHORS)
   const books = useQuery(ALL_BOOKS)
   
-  console.log('in App.js, books.data: ', books.data)
-
   return (
     <div>
       <div>
