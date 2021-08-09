@@ -93,22 +93,6 @@ const Authors = (props) => {
           <br></br>
           <button type='submit'>update author</button>
         </form>
-
-        {/* <form onSubmit={ handleSubmit }>
-          name: 
-          <input
-            value={ name }
-            onChange={ ({ target }) => setName(target.value)}
-          />
-          <br></br>
-          born:
-          <input
-            value={ born }
-            onChange={ ({ target }) => setBorn(target.value)}
-          />
-          <br></br>
-          <button type='submit'>update author</button>
-        </form> */}
   
       </div>
     )
