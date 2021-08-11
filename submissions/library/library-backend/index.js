@@ -1,5 +1,22 @@
-const { ApolloServer, gql } = require('apollo-server')
+const { ApolloServer, UserInputError, gql } = require('apollo-server')
+require('dotenv').config()
+const mongoose = require('mongoose')
+const Author = require('./models/author')
+const Book = require('./models/book')
+const { processString } = require('./helpers')
 const { v1: uuid } = require('uuid')
+const author = require('./models/author')
+
+console.log('connecting to ', process.env.MONGODB_URI)
+
+mongoose
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true })
+  .then(() => {
+    console.log('connected to MongoDB')
+  })
+  .catch((error) => {
+    console.log('error connecting to MongoDB: ', error.message)
+  })
 
 let authors = [
     {
@@ -84,6 +101,7 @@ let books = [
     },
 ]
 
+
 const findNumBooks = (author) => {
   const name = author.name.toLowerCase()
   let numBooks = 0
@@ -106,15 +124,11 @@ const findBookCountAndReturnEditedObject = (author) => {
   return {...author, bookCount: numBooks}
 }
 
-const processString = (str) => {
-  return str.toLowerCase().trim()
-}
-
 const typeDefs = gql`
     type Book {
         title: String!
         published: Int!
-        author: String!
+        author: Author!
         id: String!
         genres: [String!]!
     }
@@ -150,11 +164,11 @@ const typeDefs = gql`
 
 const resolvers = {
     Query: {
-        bookCount: () => books.length,
-        authorCount: () => authors.length,
+        bookCount: () => Book.collection.countDocuments(),
+        authorCount: () => Author.collection.countDocuments(),
         allBooks: (root, args) => {
           if (!args.author && !args.genre) {
-            return books
+            return Book.find({})
           } else if (args.author && !args.genre) {
             let booksByAuthor = []
 
@@ -194,8 +208,8 @@ const resolvers = {
             return booksInGenre
           }
         },
-        findAuthor: (root, args) => authors.find(a => a.name.toLowerCase().trim() === args.name.toLowerCase().trim()),
-        allAuthors: () => authors
+        findAuthor: (root, args) => Author.findOne({ name: processString(args.name) }),
+        allAuthors: () => Author.find({})
     },
     Author: {
       bookCount: (root) => {
@@ -203,29 +217,42 @@ const resolvers = {
       }
     },
     Mutation: {
-      addBook: (root, args) => {
-        const newBookObject = {
-          title: args.title,
-          published: args.published,
-          author: args.author.toLowerCase().trim(),
-          id: uuid(),
-          genres: args.genres
+      addBook: async (root, args) => {
+        const authorName = processString(args.author)
+        const author = await Author.findOne({ name: authorName })
+        const genres = args.genres.map(g => processString(g))
+
+        if (!author) {
+          const newAuthor = new Author({
+            name: authorName
+          })
+
+          await newAuthor.save()
+
+          const newBook = new Book({
+            title: processString(args.title),
+            published: args.published,
+            author: newAuthor,
+            genres: genres
+          })
+
+          await newBook.save()
+          return newBook
+        } else {
+          const newBook = new Book({
+            title: processString(args.title),
+            published: args.published,
+            author: author,
+            genres: genres
+          })
+
+          await newBook.save()
+
+          return newBook
+
         }
 
-        books = books.concat(newBookObject)
 
-        let authorsFilter = authors.map(a => a.name.toLowerCase().trim())
-        if (!authorsFilter.includes(args.author.toLowerCase().trim())) {
-          console.log('author does not exist in db, create new author object and add to list/db')
-          const newAuthorObject = {
-            name: args.author.toLowerCase().trim(),
-            id: uuid(),
-            born: null
-          }
-          authors = authors.concat(newAuthorObject)
-        } 
-
-        return newBookObject
       },
       editAuthor: (root, args) => {
         //tried normalizing names - didn't seem worth it, especially because the string.normalize() method had no apparent effect (verified by equality checks)
