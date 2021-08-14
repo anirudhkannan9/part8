@@ -4,8 +4,6 @@ const mongoose = require('mongoose')
 const Author = require('./models/author')
 const Book = require('./models/book')
 const { processString } = require('./helpers')
-const { v1: uuid } = require('uuid')
-const author = require('./models/author')
 
 console.log('connecting to ', process.env.MONGODB_URI)
 
@@ -18,31 +16,6 @@ mongoose
     console.log('error connecting to MongoDB: ', error.message)
   })
 
-let authors = [
-    {
-      name: 'Robert Martin',
-      id: "afa51ab0-344d-11e9-a414-719c6709cf3e",
-      born: 1952,
-    },
-    {
-      name: 'Martin Fowler',
-      id: "afa5b6f0-344d-11e9-a414-719c6709cf3e",
-      born: 1963
-    },
-    {
-      name: 'Fyodor Dostoevsky',
-      id: "afa5b6f1-344d-11e9-a414-719c6709cf3e",
-      born: 1821
-    },
-    { 
-      name: 'Joshua Kerievsky', // birthyear not known
-      id: "afa5b6f2-344d-11e9-a414-719c6709cf3e",
-    },
-    { 
-      name: 'Sandi Metz', // birthyear not known
-      id: "afa5b6f3-344d-11e9-a414-719c6709cf3e",
-    },
-]
 
 /*
  * It might make more sense to associate a book with its author by storing the author's name in the context of the book instead of the author's id
@@ -219,7 +192,14 @@ const resolvers = {
             name: authorName
           })
 
-          await newAuthor.save()
+          try {
+            await newAuthor.save()
+          } catch (error) {
+            throw new UserInputError(error.message, {
+              invalidArgs: args
+            })
+          }
+
 
           const newBook = new Book({
             title: processString(args.title),
@@ -228,7 +208,14 @@ const resolvers = {
             genres: genres
           })
 
-          await newBook.save()
+          try {
+            await newBook.save()
+          } catch (error) {
+            throw new UserInputError(error.message, {
+              invalidArgs: args
+            })
+          }
+
           return newBook
         } else {
           const newBook = new Book({
