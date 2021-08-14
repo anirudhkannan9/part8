@@ -166,7 +166,7 @@ const resolvers = {
     Query: {
         bookCount: () => Book.collection.countDocuments(),
         authorCount: () => Author.collection.countDocuments(),
-        allBooks: (root, args) => {
+        allBooks: async (root, args) => {
           if (!args.author && !args.genre) {
             return Book.find({})
           } else if (args.author && !args.genre) {
@@ -179,16 +179,8 @@ const resolvers = {
             })
 
             return booksByAuthor
-          } else if (!args.author && args.genre) {            
-            let booksInGenre = []
-
-            books.forEach(book => {
-              if (book.genres.map(g => g.toLowerCase().trim()).includes(args.genre.toLowerCase().trim())) {
-                booksInGenre = booksInGenre.concat(book)
-              }
-            })
-
-            return booksInGenre
+          } else if (!args.author && args.genre) {      
+            return Book.find( { genres: { $in: [ processString(args.genre) ] } } )
           } else {
             let booksByAuthor = []
 
@@ -254,22 +246,16 @@ const resolvers = {
 
 
       },
-      editAuthor: (root, args) => {
+      editAuthor: async (root, args) => {
         //tried normalizing names - didn't seem worth it, especially because the string.normalize() method had no apparent effect (verified by equality checks)
-
-        const processedName = processString(args.name)
-        const authorsFilter = authors.map(a => a.name).map(n => processString(n))
-        
-        if (authorsFilter.includes(processedName)) {
-          authors = authors.map(a => processString(a.name) === processedName ? {...a, born: args.setBornTo} : a)
-          return authors.find(a => processString(a.name) === processedName)
-
+        const author = await Author.findOne( { name: processString(args.name) } )
+        if (!author) {
+          return author
         } else {
-          console.log('author does not exist in server')
-          return null
+          author.born = args.setBornTo
+          await author.save()
+          return author
         }
-        
-
 
       }
     } 
