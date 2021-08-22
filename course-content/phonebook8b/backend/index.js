@@ -1,10 +1,12 @@
 const { ApolloServer, UserInputError, gql, AuthenticationError } = require('apollo-server')
+
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
+
 const mongoose = require('mongoose')
 const Person = require('./models/person')
 const User = require('./models/user')
-const jwt = require('jsonwebtoken')
-const bcrypt = require('bcrypt')
 
 console.log('connecting to', process.env.MONGODB_URI)
 
@@ -44,17 +46,21 @@ const { v1: uuid } = require('uuid')
 //   ]
 
 const typeDefs = gql`
+  type Person {
+      name: String!
+      phone: String
+      address: Address!
+      id: ID!
+  }
 
   type Address {
       street: String!
       city: String!
   }
 
-  type Person {
-      name: String!
-      phone: String
-      address: Address!
-      id: ID!
+  enum YesNo {
+      YES
+      NO
   }
 
   type User {
@@ -66,11 +72,6 @@ const typeDefs = gql`
 
   type Token {
       value: String!
-  }
-
-  enum YesNo {
-      YES
-      NO
   }
 
   type Query {

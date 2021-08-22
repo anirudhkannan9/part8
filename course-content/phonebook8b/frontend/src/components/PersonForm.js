@@ -1,5 +1,5 @@
 import { React, useState } from 'react'
-import { gql, useMutation } from '@apollo/client'
+import { useMutation } from '@apollo/client'
 import { CREATE_PERSON, ALL_PERSONS } from '../queries'
 
 const PersonForm = ( { setError }) => {
@@ -12,16 +12,32 @@ const PersonForm = ( { setError }) => {
 
     const [ createPerson ] = useMutation(CREATE_PERSON, {
         //keep the cache in sync by fetching all persons again whenever a new person is created
-        refetchQueries: [ { query: ALL_PERSONS }],
+        // refetchQueries: [ { query: ALL_PERSONS }],
         onError: (error) => {
             setError(error.graphQLErrors[0].message)
+        },
+        //handling updating the cache ourselves so query doesn't have to rerun with each update. Apollo calls this update callback after the mutation
+        update: (store, response ) => {
+            const dataInStore = store.readQuery({ query: ALL_PERSONS })
+            store.writeQuery({
+                query: ALL_PERSONS,
+                data: {
+                    ...dataInStore,
+                    allPersons: [ ...dataInStore.allPersons, response.data.addPerson ]
+                }
+            })
+            
         }
     })
 
     const submit = event => {
         event.preventDefault()
 
-        createPerson( { variables: { name, phone, street, city } } )
+        createPerson( { variables: { 
+            name, street, city,
+            phone: phone.length > 0 ? phone : null  
+        } 
+    })
 
         setName('')
         setPhone('')

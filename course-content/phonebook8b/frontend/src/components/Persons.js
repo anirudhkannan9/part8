@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { gql, useLazyQuery } from '@apollo/client'
+import { useLazyQuery } from '@apollo/client'
+//acts just like useQuery, difference: doesn't immediately execute query. Returns a tuple containing a function that you can call when ready to execute the query
 import { FIND_PERSON } from '../queries'
 
 const Persons = ({ persons }) => {
